@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bulk File Downloader</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #downloadLinks a { display: block; margin: 5px 0; }
+    button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>CT ECO File Downloader</h2>
+  <p>Upload a CSV file with filenames (one per line or column), and download the corresponding ZIP files.</p>
+
+  <input type="file" id="csvFile" accept=".csv">
+  <button onclick="generateLinks()">Generate Download Links</button>
+  <div id="downloadLinks"></div>
+  <button onclick="downloadAll()" id="downloadAllBtn" style="display:none;">Download All</button>
+
+  <script>
+    let urls = [];
+
+    function generateLinks() {
+      const fileInput = document.getElementById('csvFile');
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("Please select a CSV file.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const filenames = parseCSV(text);
+        urls = filenames.map(name => `https://cteco.uconn.edu/download/aerial/2023/tiles/Tif/${name}.zip`);
+
+        const container = document.getElementById('downloadLinks');
+        container.innerHTML = '';
+        urls.forEach(url => {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = '';
+          a.textContent = `Download ${url.split('/').pop()}`;
+          container.appendChild(a);
+        });
+
+        if (urls.length > 0) {
+          document.getElementById('downloadAllBtn').style.display = 'inline';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function parseCSV(text) {
+      const rows = text.split(/\r?\n/).map(row => row.trim()).filter(row => row);
+      // Flatten if comma-separated
+      const all = [];
+      rows.forEach(row => {
+        row.split(',').forEach(item => {
+          const trimmed = item.trim();
+          if (trimmed) all.push(trimmed);
+        });
+      });
+      return all;
+    }
+
+    function downloadAll() {
+      urls.forEach(url => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+    }
+  </script>
+</body>
+</html>
